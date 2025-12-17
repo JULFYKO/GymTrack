@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ plan.title }} — GymTrack{% endblock %}
+
+{% block content %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h1 class="card-title">{{ plan.title }}</h1>
+            <p class="card-text">{{ plan.description|linebreaksbr }}</p>
+            <p class="text-muted">Author: {{ plan.author }} — Created: {{ plan.created_at }}</p>
+        </div>
+    </div>
+
+    <h2 class="h5">Exercises</h2>
+    <ol class="list-group list-group-numbered mb-3">
+        {% for item in plan.items.all %}
+            <li class="list-group-item">
+                {{ item.exercise.name }}{% if item.default_reps %} — {{ item.default_reps }}{% endif %}
+            </li>
+        {% empty %}
+            <li class="list-group-item">No exercises assigned.</li>
+        {% endfor %}
+    </ol>
+
+    <a class="btn btn-secondary" href="{% url 'workouts:trainingplan-list' %}">Back to plans</a>
+{% endblock %}

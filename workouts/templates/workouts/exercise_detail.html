@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ exercise.name }} — GymTrack{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-body">
+            <h1 class="card-title">{{ exercise.name }}</h1>
+            <p class="card-text">{{ exercise.description|linebreaksbr }}</p>
+            <p class="text-muted">Created: {{ exercise.created_at }}</p>
+            <a class="btn btn-secondary" href="{% url 'workouts:exercise-list' %}">Back to list</a>
+        </div>
+    </div>
+{% endblock %}

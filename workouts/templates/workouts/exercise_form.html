@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Exercise Form — GymTrack{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-body">
+      <h1 class="h4">{% if form.instance.pk %}Edit Exercise{% else %}New Exercise{% endif %}</h1>
+      <form method="post">{% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="mb-3">
+          {{ form.name.label_tag }}
+          {{ form.name }}
+          {{ form.name.errors }}
+        </div>
+        <div class="mb-3">
+          {{ form.description.label_tag }}
+          {{ form.description }}
+          {{ form.description.errors }}
+        </div>
+        <button class="btn btn-primary" type="submit">Save</button>
+        <a class="btn btn-link" href="{% url 'workouts:exercise-list' %}">Cancel</a>
+      </form>
+    </div>
+  </div>
+{% endblock %}

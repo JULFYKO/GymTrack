@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Training Plans — GymTrack{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3">Training Plans</h1>
+        <a class="btn btn-primary" href="/workouts/exercises/">View Exercises</a>
+    </div>
+
+    <ul class="list-group">
+        {% for plan in plans %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <a href="{% url 'workouts:trainingplan-detail' plan.pk %}">{{ plan.title }}</a>
+                <div>
+                    <a class="btn btn-sm btn-outline-danger" href="{% url 'workouts:trainingplan-delete' plan.pk %}">Delete</a>
+                </div>
+            </li>
+        {% empty %}
+            <li class="list-group-item">No plans yet.</li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}

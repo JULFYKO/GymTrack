@@ -1,27 +1,49 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 
 
+# Simple exercise model
 class Exercise(models.Model):
-    name = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    instructions = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+	name = models.CharField(max_length=200)
+	description = models.TextField(blank=True)
+	created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return self.name
+	class Meta:
+		ordering = ["name"]
+
+	def __str__(self):
+		return self.name
 
 
-class ExerciseLog(models.Model):
-    exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, related_name='logs')
-    date = models.DateField()
-    weight = models.FloatField(blank=True, null=True, help_text='Weight used (kg or lb)')
-    reps = models.PositiveIntegerField(blank=True, null=True)
-    sets = models.PositiveIntegerField(default=1)
-    notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+class TrainingPlan(models.Model):
+	title = models.CharField(max_length=200)
+	description = models.TextField(blank=True)
+	exercises = models.ManyToManyField(
+		Exercise, through="TrainingPlanItem", related_name="training_plans", blank=True
+	)
+	author = models.ForeignKey(
+		get_user_model(), null=True, blank=True, on_delete=models.SET_NULL
+	)
+	created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        ordering = ['-date', '-created_at']
+	class Meta:
+		ordering = ["title"]
 
-    def __str__(self):
-        return f"{self.exercise.name} — {self.date} ({self.sets}×{self.reps or '-'} @ {self.weight or '-'})"
+	def __str__(self):
+		return self.title
+
+
+class TrainingPlanItem(models.Model):
+	plan = models.ForeignKey(TrainingPlan, on_delete=models.CASCADE, related_name="items")
+	exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
+	order = models.PositiveIntegerField(default=0)
+	default_sets = models.PositiveIntegerField(default=3)
+	default_reps = models.CharField(max_length=50, blank=True)
+	note = models.TextField(blank=True)
+
+	class Meta:
+		ordering = ["order"]
+		unique_together = (("plan", "exercise", "order"),)
+
+	def __str__(self):
+		return f"{self.plan.title} - {self.order}: {self.exercise.name}"

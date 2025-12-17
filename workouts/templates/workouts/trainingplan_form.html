@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Training Plan Form — GymTrack{% endblock %}
+
+{% block content %}
+  <div class="card">
+    <div class="card-body">
+      <h1 class="h4">{% if plan %}Edit Training Plan{% else %}New Training Plan{% endif %}</h1>
+      <form method="post">{% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="mb-3">
+          {{ form.title.label_tag }}
+          {{ form.title }}
+          {{ form.title.errors }}
+        </div>
+        <div class="mb-3">
+          {{ form.description.label_tag }}
+          {{ form.description }}
+          {{ form.description.errors }}
+        </div>
+
+        <h3 class="h6 mt-3">Exercises</h3>
+        {{ formset.management_form }}
+        <div class="mb-3">
+          {% for f in formset %}
+            <div class="card mb-2 p-2">
+              <div class="row g-2 align-items-center">
+                <div class="col-md-4">{{ f.exercise.label_tag }}{{ f.exercise }}</div>
+                <div class="col-md-2">{{ f.order.label_tag }}{{ f.order }}</div>
+                <div class="col-md-2">{{ f.default_sets.label_tag }}{{ f.default_sets }}</div>
+                <div class="col-md-2">{{ f.default_reps.label_tag }}{{ f.default_reps }}</div>
+                <div class="col-md-12 mt-2">{{ f.note.label_tag }}{{ f.note }}</div>
+                <div class="col-md-12">{{ f.DELETE }} Remove</div>
+              </div>
+              {{ f.id }}
+            </div>
+          {% endfor %}
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save</button>
+        <a class="btn btn-link" href="{% url 'workouts:trainingplan-list' %}">Cancel</a>
+      </form>
+    </div>
+  </div>
+{% endblock %}

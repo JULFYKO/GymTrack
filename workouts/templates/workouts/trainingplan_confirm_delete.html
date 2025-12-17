@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Training Plan — GymTrack{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-body">
+            <h1 class="h4">Delete Training Plan</h1>
+            <p>Are you sure you want to delete "{{ object.title }}"?</p>
+            <form method="post">{% csrf_token %}
+                <button class="btn btn-danger" type="submit">Yes, delete</button>
+                <a class="btn btn-link" href="{% url 'workouts:trainingplan-detail' object.pk %}">Cancel</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

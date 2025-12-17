@@ -37,11 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'services',
+    # 'services',
     'workouts',
-    'sessions',
-    'accounts',
-    'analytics',
+    # 'sessions',
+    # 'accounts',
+    # 'analytics',
+    # 'workoutplans',
     
 ]
 
@@ -60,7 +61,7 @@ ROOT_URLCONF = 'Django.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
