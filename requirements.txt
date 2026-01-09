@@ -1,0 +1,6 @@
+Django>=4.2
+# Storage backends for Django + Azure Blob Storage
+django-storages>=1.12
+azure-storage-blob>=12.8.0
+# optional: if you use azure-identity for MSI or managed identity auth
+# azure-identity>=1.11.0

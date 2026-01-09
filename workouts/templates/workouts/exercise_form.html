@@ -1,26 +1,277 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %} 
 
-{% block title %}Exercise Form — GymTrack{% endblock %}
+{% block title %}
+  {% if form.instance.pk %}Edit {{ form.instance.name }}{% else %}New Exercise{% endif %} — GymTrack
+{% endblock %} 
 
 {% block content %}
-  <div class="card">
-    <div class="card-body">
-      <h1 class="h4">{% if form.instance.pk %}Edit Exercise{% else %}New Exercise{% endif %}</h1>
-      <form method="post">{% csrf_token %}
+<div class="max-w-4xl mx-auto bg-slate-800 shadow-xl rounded-lg p-6 border border-slate-700">
+  <h1 class="text-2xl font-bold text-slate-100 mb-6 pb-2 border-b border-slate-700">
+    {% if form.instance.pk %}Edit Exercise{% else %}Create New Exercise{% endif %}
+  </h1>
+
+  <form method="post" enctype="multipart/form-data" class="space-y-8">
+    {% csrf_token %} 
+    
+    {% if form.non_field_errors %}
+      <div class="bg-red-900/50 border border-red-500 text-red-200 p-3 rounded">
         {{ form.non_field_errors }}
-        <div class="mb-3">
-          {{ form.name.label_tag }}
-          {{ form.name }}
-          {{ form.name.errors }}
+      </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2 space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Name</label>
+                {{ form.name }} <div class="text-red-400 text-sm">{{ form.name.errors }}</div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-1">Description</label>
+                <div class="relative">
+                    {{ form.description }}
+                </div>
+                <div class="text-red-400 text-sm">{{ form.description.errors }}</div>
+            </div>
         </div>
-        <div class="mb-3">
-          {{ form.description.label_tag }}
-          {{ form.description }}
-          {{ form.description.errors }}
+
+        <div class="md:col-span-1">
+            <label class="block text-sm font-medium text-slate-300 mb-1">Thumbnail (Image Only)</label>
+            <div class="bg-slate-900 p-4 rounded border border-slate-700 text-center group relative">
+                
+                <div id="thumbnail-preview-container" class="{% if not form.instance.main_image %}hidden{% endif %} relative">
+                    <img id="thumbnail-preview" 
+                         src="{% if form.instance.main_image %}{{ form.instance.main_image.url }}{% endif %}" 
+                         class="h-40 w-full object-cover rounded mb-3 mx-auto border border-slate-600 shadow-sm" 
+                         alt="Preview">
+                </div>
+
+                <div id="thumbnail-placeholder" class="h-40 w-full bg-slate-800 rounded mb-3 flex items-center justify-center text-slate-500 text-xs border border-dashed border-slate-600 {% if form.instance.main_image %}hidden{% endif %}">
+                    <span>No Image Selected</span>
+                </div>
+
+                <div class="relative overflow-hidden inline-block w-full">
+                    {{ form.main_image }}
+                </div>
+            </div>
         </div>
-        <button class="btn btn-primary" type="submit">Save</button>
-        <a class="btn btn-link" href="{% url 'workouts:exercise-list' %}">Cancel</a>
-      </form>
     </div>
-  </div>
+
+    <div class="border-t border-slate-700 pt-6">
+        <h3 class="text-lg font-semibold text-slate-200 mb-2">Gallery & Videos</h3>
+        <p class="text-sm text-slate-400 mb-4">Add multiple images or videos (.mp4, .mov) for instructions.</p>
+        
+        {{ media_formset.management_form }}
+        
+        <div class="text-red-400 text-sm">{{ media_formset.non_form_errors }}</div>
+
+        <div id="media-list" class="space-y-3">
+            {% for media_form in media_formset %}
+                <div class="media-row bg-slate-700/50 p-3 rounded border border-slate-600 flex flex-col md:flex-row gap-4 items-start relative group">
+                    {{ media_form.id }}
+                    
+                    <div class="flex-1 w-full min-w-0"> <label class="text-xs text-slate-400 block mb-1">File</label>
+                        
+                        {% if media_form.instance.file %}
+                            <div class="text-xs text-indigo-300 mb-2 flex items-center gap-2 overflow-hidden">
+                                <span class="truncate max-w-[150px]">{{ media_form.instance.file.name }}</span>
+                                <a href="{{ media_form.instance.file.url }}" target="_blank" class="text-slate-400 hover:text-white" title="View">↗</a>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="text-sm text-slate-300 truncate">
+                             {{ media_form.file }}
+                        </div>
+                        <div class="text-red-400 text-xs mt-1">{{ media_form.file.errors }}</div>
+                    </div>
+                    
+                    <div class="flex-1 w-full">
+                         <label class="text-xs text-slate-400 block mb-1">Caption</label>
+                         {{ media_form.caption }}
+                    </div>
+
+                    <div class="w-20">
+                        <label class="text-xs text-slate-400 block mb-1">Order</label>
+                        {{ media_form.order }}
+                    </div>
+
+                    <div class="pt-6 w-auto flex items-center">
+                        {% if media_form.instance.pk %}
+                            <div class="hidden">{{ media_form.DELETE }}</div> <label for="{{ media_form.DELETE.id_for_label }}" class="text-red-400 hover:text-red-300 text-sm cursor-pointer flex items-center gap-1 select-none delete-trigger">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                <span class="delete-label">Delete</span>
+                            </label>
+                        {% else %}
+                             <button type="button" class="remove-row-btn text-red-400 hover:text-red-300 text-sm flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                Remove
+                             </button>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <button type="button" id="add-media-btn" class="mt-4 flex items-center gap-2 text-sm bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded transition border border-slate-600 shadow-sm">
+            <span>+ Add another file</span>
+        </button>
+    </div>
+
+    <div id="empty-form-template" class="hidden">
+        <div class="media-row bg-slate-700/50 p-3 rounded border border-slate-600 flex flex-col md:flex-row gap-4 items-start mt-3 animate-fade-in">
+            <div class="flex-1 w-full min-w-0">
+                <label class="text-xs text-slate-400 block mb-1">File</label>
+                {{ media_formset.empty_form.file }}
+            </div>
+            <div class="flex-1 w-full">
+                 <label class="text-xs text-slate-400 block mb-1">Caption</label>
+                 {{ media_formset.empty_form.caption }}
+            </div>
+            <div class="w-20">
+                <label class="text-xs text-slate-400 block mb-1">Order</label>
+                {{ media_formset.empty_form.order }}
+            </div>
+            <div class="pt-6">
+                 <button type="button" class="remove-row-btn text-red-400 hover:text-red-300 text-sm flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    Remove
+                 </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex items-center justify-end pt-6 gap-4 border-t border-slate-700">
+      <a class="text-slate-400 hover:text-white transition" href="{% url 'workouts:exercise-list' %}">Cancel</a>
+      <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-8 py-2 rounded shadow-lg transition transform hover:-translate-y-0.5" type="submit">
+        Save Everything
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- 1. Thumbnail Preview Logic ---
+    const thumbnailInput = document.querySelector('input[name="main_image"]');
+    const previewContainer = document.getElementById('thumbnail-preview-container');
+    const previewImage = document.getElementById('thumbnail-preview');
+    const placeholder = document.getElementById('thumbnail-placeholder');
+
+    if (thumbnailInput) {
+        thumbnailInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    if(previewContainer) previewContainer.classList.remove('hidden');
+                    if(placeholder) placeholder.classList.add('hidden');
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // --- 2. Auto-Resize Description ---
+    const descriptionField = document.querySelector('textarea[name="description"]');
+    if (descriptionField) {
+        const autoResize = () => {
+            descriptionField.style.height = 'auto';
+            descriptionField.style.height = descriptionField.scrollHeight + 'px';
+        };
+        descriptionField.style.overflowY = 'hidden';
+        descriptionField.addEventListener('input', autoResize);
+        // Викликаємо один раз при завантаженні, щоб розтягнути, якщо текст вже є
+        autoResize(); 
+    }
+
+    // --- 3. Dynamic Formset Logic (ВИПРАВЛЕНО) ---
+    const addBtn = document.getElementById('add-media-btn');
+    const list = document.getElementById('media-list');
+    const emptyFormTemplate = document.getElementById('empty-form-template');
+    
+    // ВИПРАВЛЕННЯ: Шукаємо input, ім'я якого закінчується на TOTAL_FORMS
+    // Це працює для будь-якого префікса (media, form, gallery тощо)
+    const totalFormsInput = document.querySelector('input[type="hidden"][name$="-TOTAL_FORMS"]');
+
+    if (addBtn && list && emptyFormTemplate && totalFormsInput) {
+        addBtn.addEventListener('click', function(e) {
+            e.preventDefault(); // Запобігаємо будь-яким дефолтним діям
+            
+            let count = parseInt(totalFormsInput.value);
+            
+            // Отримуємо HTML шаблону
+            let newRowHTML = emptyFormTemplate.innerHTML;
+            
+            // Знаходимо реальний префікс (наприклад, 'media' або 'form')
+            // name="media-TOTAL_FORMS" -> prefix="media"
+            const prefix = totalFormsInput.name.split('-')[0];
+            
+            // Замінюємо __prefix__ на поточний номер (count)
+            // Також замінюємо можливий старий префікс, якщо Django використав інший у empty_form
+            const regex = new RegExp(`(${prefix}|form)-__prefix__`, 'g');
+            newRowHTML = newRowHTML.replace(regex, `${prefix}-${count}`);
+            
+            // Про всяк випадок проста заміна __prefix__, якщо regex не спрацював
+            newRowHTML = newRowHTML.replace(/__prefix__/g, count);
+
+            // Додаємо в DOM
+            list.insertAdjacentHTML('beforeend', newRowHTML);
+            
+            // Оновлюємо лічильник
+            totalFormsInput.value = count + 1;
+        });
+    } else {
+        console.error("Critical Error: Elements for dynamic formset not found.");
+        console.log("Button:", addBtn);
+        console.log("Total Input:", totalFormsInput);
+    }
+
+    // --- 4. Remove Logic ---
+    if (list) {
+        list.addEventListener('click', function(e) {
+            // Кнопка Remove (для нових рядків)
+            const removeBtn = e.target.closest('.remove-row-btn');
+            if (removeBtn) {
+                removeBtn.closest('.media-row').remove();
+                // Тут ми НЕ зменшуємо TOTAL_FORMS, Django це обробляє нормально
+            }
+            
+            // Кнопка Delete (для існуючих рядків)
+            const delLabel = e.target.closest('.delete-trigger');
+            if (delLabel) {
+                const row = delLabel.closest('.media-row');
+                const checkbox = row.querySelector('input[type="checkbox"]'); // Стандартний Django checkbox
+                
+                // Якщо ми приховали стандартний чекбокс через CSS (hidden), треба його перемикати вручну:
+                if (checkbox) {
+                    // Якщо чекбокс був прихований display:none, клік по label може не спрацювати на ньому автоматично
+                    // тому робимо невелику затримку для перевірки стану
+                    setTimeout(() => {
+                         const labelText = delLabel.querySelector('.delete-label');
+                         if (checkbox.checked) {
+                             row.classList.add('opacity-40', 'bg-red-900/10');
+                             if(labelText) labelText.textContent = "Restore";
+                         } else {
+                             row.classList.remove('opacity-40', 'bg-red-900/10');
+                             if(labelText) labelText.textContent = "Delete";
+                         }
+                    }, 50);
+                }
+            }
+        });
+    }
+});
+</script>
+
+<style>
+    /* Анімація для нових рядків */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-out forwards;
+    }
+</style>
 {% endblock %}
