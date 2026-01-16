@@ -1,0 +1,38 @@
+{% extends 'base.html' %} {% block title %}Analytics — GymTrack{% endblock %} {%
+block content %}
+<h1 class="text-2xl font-semibold text-slate-100">Analytics</h1>
+
+<div class="mt-4 bg-slate-800 p-4 rounded">
+  <h2 class="text-lg text-slate-100">Total all time: {{ total_all }}</h2>
+
+  <h3 class="mt-4 text-slate-200">By day</h3>
+  <ul class="list-disc pl-6 text-slate-300">
+    {% for day, total in by_day %}
+    <li>{{ day }} — {{ total }}</li>
+    {% endfor %}
+  </ul>
+
+  <h3 class="mt-4 text-slate-200">Sessions</h3>
+  <ul class="space-y-1">
+    {% for s in sessions %}
+    <li class="text-slate-300">
+      <a
+        class="text-emerald-300 hover:underline"
+        href="{% url 'training:session_detail' s.session.pk %}"
+        >Training {{ s.session.pk }}</a
+      >
+      — total: {{ s.total }}
+    </li>
+    {% endfor %}
+  </ul>
+
+  {% if medals %}
+  <h3 class="mt-4 text-slate-200">Your medals</h3>
+  <ul class="list-disc pl-6 text-slate-300">
+    {% for a in medals %}
+    <li>{{ a.medal.name }} — {{ a.medal.description }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+{% endblock %}

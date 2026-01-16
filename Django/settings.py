@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'workouts',
+    'training',
 ]
 
 
@@ -85,7 +86,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+# Redirect after login/logout to a valid page instead of the default /accounts/profile/
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 # Media / file storage configuration
 # Default to local media (used in development). If Azure env vars are present,

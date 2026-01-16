@@ -1,19 +1,45 @@
-{% extends 'base.html' %} 
-
-{% block title %}Home — GymTrack{% endblock %} 
-
+{% extends 'base.html' %}
+{% block title %}Home — GymTrack{% endblock %}
 {% block content %}
 <div class="bg-slate-800 p-6 rounded-lg shadow">
   <h1 class="text-3xl font-semibold text-slate-100">Welcome to GymTrack</h1>
   <p class="mt-2 text-slate-300">Track exercises, plans and progress.</p>
-  
+
   <div class="mt-6 flex gap-4">
-    <a href="{% url 'workouts:exercise-list' %}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition">
+    <a
+      href="{% url 'workouts:exercise-list' %}"
+      class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition"
+    >
       Go to Exercises
     </a>
-    <a href="{% url 'workouts:trainingplan-list' %}" class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded transition">
-      View Plans
+    
+    <a
+      href="{% url 'training:start_session' %}"
+      class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded transition"
+    >
+      Start Training
     </a>
   </div>
+</div>
+
+<div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div class="bg-slate-800 p-4 rounded">
+    <h2 class="text-xl font-semibold text-slate-100">Останні тренування</h2>
+    <ul class="mt-3 space-y-2">
+      {% for s in last_trainings %}
+      <li class="text-slate-200">
+        <a
+          class="text-emerald-300 hover:underline"
+          href="{% url 'training:workout_summary' s.pk %}"
+          >{{ s.started_at|date:'Y-m-d H:i' }} — total: {{ s.total_weight }}</a
+        >
+      </li>
+      {% empty %}
+      <li class="text-slate-400">Немає завершених тренувань</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  
 </div>
 {% endblock %}

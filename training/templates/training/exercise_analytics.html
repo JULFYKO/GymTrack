@@ -1,0 +1,80 @@
+{% extends 'base.html' %} {% block title %}Аналітика — {{ exercise.name }} —
+GymTrack{% endblock %} {% block content %}
+<div class="card">
+  <div class="card-body">
+    <h2 class="card-title">Аналітика вправи: {{ exercise.name }}</h2>
+    <p class="text-muted">
+      Особисті підсумки: <strong>{{ user_total_reps }}</strong> повторень,
+      <strong>{{ user_total_weight|floatformat:2 }}</strong> кг загалом
+    </p>
+
+    <div class="mb-3">
+      <span class="me-2">Вага: </span>
+      {% if weight_tier == 'gold' %}
+      <span class="badge bg-warning text-dark">Gold</span>
+      {% elif weight_tier == 'silver' %}
+      <span class="badge bg-secondary">Silver</span>
+      {% elif weight_tier == 'bronze' %}
+      <span class="badge bg-info text-dark">Bronze</span>
+      {% else %}
+      <span class="text-muted">No medal yet</span>
+      {% endif %}
+
+      <span class="ms-3">Повтори: </span>
+      {% if reps_tier == 'gold' %}
+      <span class="badge bg-warning text-dark">Gold</span>
+      {% elif reps_tier == 'silver' %}
+      <span class="badge bg-secondary">Silver</span>
+      {% elif reps_tier == 'bronze' %}
+      <span class="badge bg-info text-dark">Bronze</span>
+      {% else %}
+      <span class="text-muted">No medal yet</span>
+      {% endif %}
+    </div>
+
+    <canvas id="exerciseChart" height="120"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      (function(){
+        const labels = {{ labels|safe }};
+        const weights = {{ weights|safe }};
+        const reps = {{ reps|safe }};
+
+        const ctx = document.getElementById('exerciseChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                type: 'line',
+                label: 'Total weight (kg)',
+                data: weights,
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75,192,192,0.2)',
+                yAxisID: 'y',
+              },
+              {
+                type: 'bar',
+                label: 'Reps',
+                data: reps,
+                backgroundColor: 'rgba(54,162,235,0.6)',
+                yAxisID: 'y1',
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+              y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Weight (kg)' } },
+              y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'Reps' } }
+            }
+          }
+        });
+      })();
+    </script>
+  </div>
+</div>
+{% endblock %}

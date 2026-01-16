@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Тренування{% endblock %}
+
+{% block content %}
+<div class="pb-32 max-w-2xl mx-auto">
+  <div
+    class="bg-slate-800 p-6 rounded-2xl shadow-lg mb-6 border border-slate-700"
+  >
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-2xl font-bold text-white mb-1">
+          {% if session.pk %}Тренування #{{ session.pk }}{% else %}Нове
+          тренування{% endif %}
+        </h1>
+        <p class="text-slate-400 text-sm">
+          {{ session.created_at|date:"d.m.Y H:i"|default:"Сьогодні" }}
+        </p>
+      </div>
+      <a
+        href="{% url 'training:start_session' %}"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-lg shadow-indigo-900/20 flex items-center gap-2"
+      >
+        <span>+ Почати тренування</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="space-y-6">
+    {% for ei in exercise_infos %}
+    <div
+      class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-md"
+    >
+      <div class="grid grid-cols-12 border-b border-slate-700 min-h-[72px]">
+        <div
+          class="col-span-6 p-4 flex flex-col justify-center border-r border-slate-700"
+        >
+          <div class="flex items-center gap-2">
+            <h3 class="font-bold text-white text-lg leading-tight">
+              {{ ei.entry.name }}
+            </h3>
+            <button
+              class="text-slate-500 hover:text-indigo-400 transition"
+              title="Info"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                class="w-5 h-5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div
+          class="col-span-4 flex flex-col items-center justify-center bg-slate-800"
+        >
+          <div class="flex gap-4 text-center">
+            <div>
+              <div
+                class="text-[10px] uppercase text-slate-500 font-bold mb-0.5"
+              >
+                Вага
+              </div>
+              <div class="text-white font-mono font-semibold">
+                {{ ei.total_weight|floatformat:0 }}
+              </div>
+            </div>
+            <div class="w-px bg-slate-700 h-8 self-center"></div>
+            <div>
+              <div
+                class="text-[10px] uppercase text-slate-500 font-bold mb-0.5"
+              >
+                Рази
+              </div>
+              <div class="text-white font-mono font-semibold">
+                {{ ei.total_reps }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-span-2">
+          <form method="post" class="h-full w-full">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_set" />
+            <input type="hidden" name="entry_id" value="{{ ei.entry.pk }}" />
+            <button
+              type="submit"
+              class="w-full h-full bg-slate-800 hover:bg-emerald-900/30 text-emerald-500 hover:text-emerald-400 transition flex items-center justify-center"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="3"
+                stroke="currentColor"
+                class="w-8 h-8"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 4.5v15m7.5-7.5h-15"
+                />
+              </svg>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="bg-slate-900/30 p-2 space-y-2">
+        {% for s in ei.entry.sets.all %}
+        <div class="grid grid-cols-12 gap-3 items-center group relative">
+          <div class="col-span-2 flex justify-center">
+            <span class="text-xs font-mono text-slate-500"
+              >сет {{ s.order }}</span
+            >
+          </div>
+
+          <div class="col-span-4 relative">
+            <form method="post" class="update-set-form w-full">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_set" />
+              <input type="hidden" name="set_id" value="{{ s.pk }}" />
+              <input type="hidden" name="reps" value="{{ s.reps }}" />
+              <div class="relative">
+                <input
+                  type="number"
+                  step="0.5"
+                  name="weight"
+                  value="{{ s.weight }}"
+                  placeholder="0"
+                  class="w-full bg-slate-900 text-white text-center font-bold rounded-lg py-2 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition auto-save-field"
+                />
+                <span
+                  class="absolute right-2 top-2.5 text-[10px] text-slate-600 pointer-events-none"
+                  >кг</span
+                >
+              </div>
+            </form>
+          </div>
+
+          <div class="col-span-4 relative">
+            <form method="post" class="update-set-form w-full">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="update_set" />
+              <input type="hidden" name="set_id" value="{{ s.pk }}" />
+              <input type="hidden" name="weight" value="{{ s.weight }}" />
+              <input
+                type="number"
+                name="reps"
+                value="{{ s.reps }}"
+                placeholder="0"
+                class="w-full bg-slate-900 text-white text-center font-bold rounded-lg py-2 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition auto-save-field"
+              />
+            </form>
+          </div>
+
+          <div class="col-span-2 flex justify-center">
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="delete_set" />
+              <input type="hidden" name="set_id" value="{{ s.pk }}" />
+              <button
+                type="submit"
+                class="text-slate-600 hover:text-red-500 transition p-2"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke-width="2"
+                  stroke="currentColor"
+                  class="w-5 h-5"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                  />
+                </svg>
+              </button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div
+        class="bg-slate-800 border-t border-slate-700 py-1 px-4 flex justify-end"
+      >
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete_entry" />
+          <input type="hidden" name="entry_id" value="{{ ei.entry.pk }}" />
+          <button
+            class="text-[10px] text-slate-500 hover:text-red-400 uppercase font-bold tracking-wider transition"
+            type="submit"
+          >
+            видалити вправу
+          </button>
+        </form>
+      </div>
+    </div>
+    {% empty %}
+    <div
+      class="bg-slate-800 rounded-xl p-8 text-center border border-dashed border-slate-600"
+    >
+      <p class="text-slate-400">Вправ ще немає. Натисніть кнопку зверху.</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div
+  class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 p-4 z-50"
+>
+  <div class="max-w-2xl mx-auto flex justify-between items-center gap-4">
+    <a
+      href="/workouts/exercises/"
+      class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-medium transition text-center border border-slate-700"
+    >
+      Меню
+    </a>
+
+    <button
+      id="global-pause"
+      class="w-16 h-14 bg-amber-600 hover:bg-amber-500 text-white rounded-xl shadow-lg transition flex items-center justify-center"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="2.5"
+        stroke="currentColor"
+        class="w-8 h-8"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M15.75 5.25v13.5m-7.5-13.5v13.5"
+        />
+      </svg>
+    </button>
+
+    <button
+      id="finish-btn"
+      class="w-16 h-14 bg-slate-800 hover:bg-red-900/30 text-red-500 hover:text-red-400 border-2 border-red-500/50 hover:border-red-500 rounded-xl transition flex items-center justify-center"
+    >
+      <div class="w-5 h-5 bg-current rounded-sm"></div>
+    </button>
+  </div>
+</div>
+
+<div
+  id="finish-modal"
+  class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[100] backdrop-blur-sm"
+>
+  <div
+    class="bg-slate-800 p-6 rounded-2xl border border-slate-600 w-80 shadow-2xl"
+  >
+    <h3 class="text-xl font-bold text-white mb-2">Завершити тренування?</h3>
+    <p class="text-slate-400 mb-6 text-sm">
+      Всі дані будуть збережені в історії.
+    </p>
+    <div class="flex gap-3">
+      <button
+        id="cancel-finish"
+        class="flex-1 py-3 rounded-xl bg-slate-700 text-white font-medium hover:bg-slate-600 transition"
+      >
+        Ні
+      </button>
+
+      {% if session.pk %}
+      <form
+        method="post"
+        action="{% url 'training:finish_session' session.pk %}"
+        class="flex-1"
+      >
+        {% csrf_token %}
+        <button
+          class="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-500 transition shadow-lg shadow-emerald-900/20"
+          type="submit"
+        >
+          Так
+        </button>
+      </form>
+      {% else %}
+      <button
+        disabled
+        class="flex-1 py-3 rounded-xl bg-gray-600 text-gray-400 font-bold cursor-not-allowed"
+      >
+        Помилка ID
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const finishModal = document.getElementById("finish-modal");
+    const finishBtn = document.getElementById("finish-btn");
+    const cancelFinish = document.getElementById("cancel-finish");
+    const globalPause = document.getElementById("global-pause");
+
+    if (finishBtn && finishModal) {
+      finishBtn.addEventListener("click", () => {
+        finishModal.classList.remove("hidden");
+        finishModal.classList.add("flex");
+      });
+      cancelFinish.addEventListener("click", () => {
+        finishModal.classList.add("hidden");
+        finishModal.classList.remove("flex");
+      });
+    }
+
+    if (globalPause) {
+      globalPause.addEventListener("click", function () {
+        const isPaused = globalPause.dataset.paused === "1";
+        if (isPaused) {
+          globalPause.dataset.paused = "0";
+          globalPause.classList.remove("bg-emerald-600");
+          globalPause.classList.add("bg-amber-600");
+          globalPause.innerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" /></svg>';
+        } else {
+          globalPause.dataset.paused = "1";
+          globalPause.classList.remove("bg-amber-600");
+          globalPause.classList.add("bg-emerald-600");
+          globalPause.innerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg>';
+        }
+      });
+    }
+
+    document.querySelectorAll(".auto-save-field").forEach(function (input) {
+      input.addEventListener("blur", function () {
+        const form = input.closest(".update-set-form");
+        if (form) setTimeout(() => form.submit(), 200);
+      });
+      input.addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+          input.blur();
+        }
+      });
+    });
+  });
+</script>
+
+{% endblock %}

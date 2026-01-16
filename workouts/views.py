@@ -7,8 +7,8 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.contrib.auth import logout as auth_logout
 from django.shortcuts import redirect
-from .models import Exercise, TrainingPlan
-from .forms import ExerciseForm, TrainingPlanForm, TrainingPlanItemFormSet, ExerciseMediaFormSet
+from .models import Exercise
+from .forms import ExerciseForm, ExerciseMediaFormSet
 
 
 
@@ -108,60 +108,19 @@ class ExerciseUpdateView(generic.UpdateView):
             return self.render_to_response(self.get_context_data(form=form))
 
 
-class TrainingPlanListView(generic.ListView):
-	model = TrainingPlan
-	template_name = "workouts/trainingplan_list.html"
-	context_object_name = "plans"
+
+def home(request):
+	# show last 3 completed trainings and popular plans
+	from training.models import TrainingSession
+	last_trainings = TrainingSession.objects.filter(ended_at__isnull=False).order_by('-ended_at')[:3]
+	
+	return render(request, 'home.html', {'last_trainings': last_trainings})
 
 
-class TrainingPlanDetailView(generic.DetailView):
-	model = TrainingPlan
-	template_name = "workouts/trainingplan_detail.html"
-	context_object_name = "plan"
 
 
-class TrainingPlanDeleteView(generic.DeleteView):
-	model = TrainingPlan
-	template_name = "workouts/trainingplan_confirm_delete.html"
-	success_url = reverse_lazy("workouts:trainingplan-list")
 
 
-def trainingplan_form_view(request, pk=None):
-	if pk:
-		plan = TrainingPlan.objects.get(pk=pk)
-	else:
-		plan = None
-
-	if request.method == "POST":
-		form = TrainingPlanForm(request.POST, instance=plan)
-		formset = TrainingPlanItemFormSet(request.POST, instance=form.instance)
-		if form.is_valid() and formset.is_valid():
-			plan = form.save()
-			formset.instance = plan
-			formset.save()
-			return redirect("workouts:trainingplan-list")
-	else:
-		form = TrainingPlanForm(instance=plan)
-		formset = TrainingPlanItemFormSet(instance=plan)
-
-	return render(
-		request,
-		"workouts/trainingplan_form.html",
-		{"form": form, "formset": formset, "plan": plan},
-	)
-
-
-class TrainingPlanCreateView(generic.View):
-	def get(self, request):
-		return trainingplan_form_view(request)
-
-	def post(self, request):
-		return trainingplan_form_view(request)
-
-
-class TrainingPlanUpdateView(generic.View):
-	def get(self, request, pk):
-		return trainingplan_form_view(request, pk=pk)
 
 
 class RegisterView(generic.CreateView):

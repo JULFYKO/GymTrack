@@ -1,119 +1,167 @@
-{% extends 'base.html' %} 
-{% block title %}Exercises — GymTrack{% endblock %} 
+{% extends 'base.html' %}
+{% block title %}Exercises — GymTrack{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-6">
-    <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-        <h1 class="text-3xl font-bold text-slate-100">Exercises</h1>
-        <div class="flex gap-3">
-            <a class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg shadow transition font-medium flex items-center gap-2"
-               href="{% url 'workouts:exercise-create' %}">
-               <span>+</span> Add Exercise
-            </a>
-            <a class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow transition font-medium"
-               href="/workouts/plans/">
-               Training Plans
-            </a>
-        </div>
+  
+  <div class="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+    <h1 class="text-3xl font-bold text-slate-100">Вправи</h1>
+    <div class="flex gap-3 w-full sm:w-auto">
+      <a
+        class="flex-1 sm:flex-none justify-center bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg shadow transition font-medium flex items-center gap-2"
+        href="{% url 'workouts:exercise-create' %}"
+      >
+        <span>+</span> <span class="hidden sm:inline">Додати вправу</span><span class="sm:hidden">Додати</span>
+      </a>
+      
     </div>
+  </div>
 
-    {% if favorite_exercises %}
-    <section class="mb-10 bg-slate-900/50 rounded-xl p-6 border border-slate-700/50">
-        <div class="flex items-center gap-3 mb-4">
-            <h2 class="text-xl font-bold text-slate-100">Favorites</h2>
-            <span class="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded-full border border-red-500/30">
-                {{ favorites_count }} liked
+  {% if favorite_exercises %}
+  <section class="mb-10 bg-slate-900/50 rounded-xl p-4 sm:p-6 border border-slate-700/50">
+    <div class="flex items-center gap-3 mb-4">
+      <h2 class="text-xl font-bold text-slate-100">Обране</h2>
+      <span class="bg-red-500/20 text-red-400 text-xs px-2 py-1 rounded-full border border-red-500/30">
+        {{ favorites_count }} вподобань
+      </span>
+    </div>
+    <div class="flex overflow-x-auto pb-2 gap-4 sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 sm:overflow-visible">
+      {% for fav in favorite_exercises %}
+      <a
+        href="{{ fav.get_absolute_url }}"
+        class="flex-shrink-0 w-32 sm:w-auto group relative bg-slate-800 rounded-lg p-3 hover:bg-slate-700 transition border border-slate-700 flex flex-col items-center text-center"
+      >
+        {% if fav.main_image %}
+        <img
+          src="{{ fav.main_image.url }}"
+          alt="{{ fav.name }}"
+          class="w-12 h-12 rounded-full object-cover mb-2 ring-2 ring-slate-600 transition group-hover:ring-indigo-500"
+        />
+        {% else %}
+        <div class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center mb-2 text-[10px] text-slate-400">
+          No Img
+        </div>
+        {% endif %}
+        <span class="text-sm text-slate-200 font-medium truncate w-full px-1">
+          {{ fav.name }}
+        </span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+    {% for ex in exercises %}
+    <div class="group bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-slate-700/50 flex flex-col h-full hover:border-slate-600 transition duration-300">
+      
+      <div class="relative h-48 overflow-hidden shrink-0">
+        <a href="{{ ex.get_absolute_url }}" class="block w-full h-full">
+          {% if ex.main_image %}
+          <img
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            src="{{ ex.main_image.url }}"
+            alt="{{ ex.name }}"
+          />
+          {% else %}
+          <div class="w-full h-full bg-slate-700 flex flex-col items-center justify-center text-slate-500 gap-2">
+            <svg class="w-10 h-10 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="text-xs">No Image</span>
+          </div>
+          {% endif %}
+        </a>
+
+        <div class="absolute top-2 right-2 z-10">
+          {% if user.is_authenticated %}
+          <form method="post" action="{% url 'workouts:exercise-favorite' ex.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}" />
+            <button
+              type="submit"
+              class="p-2 bg-slate-900/80 backdrop-blur-md rounded-full hover:bg-slate-700 transition shadow-lg border border-slate-700/50"
+              title="Toggle Favorite"
+            >
+              {% if ex in favorite_exercises %}
+              <svg class="w-4 h-4 text-red-500 fill-current" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+              </svg>
+              {% else %}
+              <svg class="w-4 h-4 text-slate-300 hover:text-red-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+              </svg>
+              {% endif %}
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="p-4 flex flex-col flex-grow">
+        <a href="{{ ex.get_absolute_url }}" class="block mb-2">
+          <h3 class="text-lg font-bold text-slate-100 group-hover:text-indigo-400 transition duration-200 line-clamp-1" title="{{ ex.name }}">
+            {{ ex.name }}
+          </h3>
+        </a>
+
+        <p class="text-slate-400 text-sm leading-relaxed mb-4 line-clamp-3 flex-grow">
+          {{ ex.description|default:"Опис відсутній." }}
+        </p>
+
+        <div class="mt-auto space-y-3 pt-3 border-t border-slate-700/50">
+          
+          {% if request.GET.next %}
+          <form method="post" action="{{ request.GET.next }}" class="w-full">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_exercise_from_library" />
+            <input type="hidden" name="exercise_id" value="{{ ex.pk }}" />
+            <button class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded font-medium text-sm transition shadow-lg shadow-emerald-900/20">
+              Додати в сесію
+            </button>
+          </form>
+          {% endif %}
+
+          <div class="flex justify-between items-center text-slate-500">
+            <span class="text-xs font-mono opacity-70">
+              {{ ex.created_at|date:'d.m.Y' }}
             </span>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {% for fav in favorite_exercises %}
-            <a href="{{ fav.get_absolute_url }}" 
-               class="group relative bg-slate-800 rounded-lg p-3 hover:bg-slate-700 transition border border-slate-700 flex flex-col items-center text-center">
-                {% if fav.main_image %}
-                    <img src="{{ fav.main_image.url }}" alt="{{ fav.name }}" class="w-12 h-12 rounded-full object-cover mb-2 ring-2 ring-slate-600 transition">
-                {% else %}
-                    <div class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center mb-2 text-xs">No Img</div>
-                {% endif %}
-                <span class="text-sm text-slate-200 font-medium truncate w-full">{{ fav.name }}</span>
-            </a>
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
-
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8">
-        {% for ex in exercises %}
-        <div class="group bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-slate-700/50 flex flex-col h-full">
             
-            <div class="relative h-56 overflow-hidden">
-                <a href="{{ ex.get_absolute_url }}" class="block w-full h-full">
-                    {% if ex.main_image %}
-                    <img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                         src="{{ ex.main_image.url }}"
-                         alt="{{ ex.name }}">
-                    {% else %}
-                    <div class="w-full h-full bg-slate-700 flex flex-col items-center justify-center text-slate-500 gap-2">
-                        <svg class="w-12 h-12 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        <span>No Image</span>
-                    </div>
-                    {% endif %}
-                </a>
+            <div class="flex items-center gap-1">
+              <a href="{% url 'training:exercise_analytics' ex.pk %}" class="p-2 text-slate-400 hover:text-indigo-400 hover:bg-slate-700 rounded-lg transition" title="Аналітика">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+              </a>
 
-                <div class="absolute top-3 right-3 z-10">
-                    {% if user.is_authenticated %}
-                    <form method="post" action="{% url 'workouts:exercise-favorite' ex.pk %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                        <button type="submit" class="p-2 bg-slate-900/80 backdrop-blur-sm rounded-full hover:bg-slate-800 transition shadow-lg">
-                            {% if ex in favorite_exercises %}
-                                <svg class="w-5 h-5 text-red-500 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
-                            {% else %}
-                                <svg class="w-5 h-5 text-slate-300 hover:text-red-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                            {% endif %}
-                        </button>
-                    </form>
-                    {% else %}
-                        <a href="{% url 'login' %}?next={{ request.path }}" class="p-2 block bg-slate-900/80 rounded-full text-slate-400 hover:text-red-400">
-                           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
-                        </a>
-                    {% endif %}
-                </div>
+              <a href="{% url 'workouts:exercise-edit' ex.pk %}" class="p-2 text-slate-400 hover:text-amber-400 hover:bg-slate-700 rounded-lg transition" title="Редагувати">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </a>
+
+              <a href="{% url 'workouts:exercise-delete' ex.pk %}" class="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition" title="Видалити">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </a>
             </div>
-
-            <div class="p-6 flex flex-col flex-grow">
-                <a href="{{ ex.get_absolute_url }}" class="block mb-2">
-                    <h3 class="text-xl font-bold text-slate-100 group-hover:text-indigo-400 transition duration-200">
-                        {{ ex.name }}
-                    </h3>
-                </a>
-                
-                <p class="text-slate-400 text-sm leading-relaxed mb-4 line-clamp-3 flex-grow">
-                    {{ ex.description|default:"No description available." }}
-                </p>
-
-                <div class="pt-4 mt-auto border-t border-slate-700/50 flex justify-between items-center text-sm">
-                    <span class="text-slate-500 text-xs font-mono">
-                        {{ ex.created_at|date:'M d, Y' }}
-                    </span>
-                    <div class="flex gap-4">
-                        <a href="{% url 'workouts:exercise-edit' ex.pk %}" class="text-slate-400 hover:text-indigo-400 transition flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            Edit
-                        </a>
-                        <a href="{% url 'workouts:exercise-delete' ex.pk %}" class="text-slate-400 hover:text-red-400 transition flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            Delete
-                        </a>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
-        {% empty %}
-        <div class="col-span-full py-16 text-center border-2 border-dashed border-slate-700 rounded-xl">
-            <p class="text-slate-400 text-xl font-medium mb-2">No exercises found</p>
-            <p class="text-slate-500">Get started by adding your first exercise.</p>
-        </div>
-        {% endfor %}
+      </div>
     </div>
+    {% empty %}
+    <div class="col-span-full py-20 text-center border-2 border-dashed border-slate-700 rounded-xl bg-slate-800/30">
+      <svg class="mx-auto h-12 w-12 text-slate-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+      </svg>
+      <p class="text-slate-300 text-xl font-medium mb-2">Вправ поки немає</p>
+      <p class="text-slate-500 mb-6">Створіть свою першу вправу, щоб почати тренування.</p>
+      <a href="{% url 'workouts:exercise-create' %}" class="text-emerald-400 hover:text-emerald-300 font-medium hover:underline">
+        Створити вправу &rarr;
+      </a>
+    </div>
+    {% endfor %}
+  </div>
 </div>
 {% endblock %}

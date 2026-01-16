@@ -1,6 +1,6 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Exercise, TrainingPlan, TrainingPlanItem, ExerciseMedia
+from .models import Exercise, ExerciseMedia
 
 class ExerciseForm(forms.ModelForm):
     class Meta:
@@ -32,49 +32,6 @@ ExerciseMediaFormSet = inlineformset_factory(
 )
 
 
-class TrainingPlanForm(forms.ModelForm):
-    class Meta:
-        model = TrainingPlan
-        fields = ["title", "description"]
-        widgets = {
-            "title": forms.TextInput(
-                attrs={
-                    "class": "block w-full rounded bg-slate-700 border border-slate-600 text-slate-100 px-3 py-2",
-                }
-            ),
-            "description": forms.Textarea(
-                attrs={
-                    "class": "block w-full rounded bg-slate-700 border border-slate-600 text-slate-100 px-3 py-2",
-                    "rows": 3,
-                }
-            ),
-        }
-
-
-TrainingPlanItemFormSet = inlineformset_factory(
-    TrainingPlan,
-    TrainingPlanItem,
-    fields=("exercise", "order", "default_sets", "default_reps", "note"),
-    extra=1,
-    widgets={
-        "exercise": forms.Select(
-            attrs={"class": "block w-full rounded bg-slate-700 border border-slate-600 text-slate-100 px-3 py-2"}
-        ),
-        "order": forms.NumberInput(
-            attrs={"class": "block rounded bg-slate-700 border border-slate-600 text-slate-100 px-2 py-1", "style": "width:100px;"}
-        ),
-        "default_sets": forms.NumberInput(
-            attrs={"class": "block rounded bg-slate-700 border border-slate-600 text-slate-100 px-2 py-1", "style": "width:100px;"}
-        ),
-        "default_reps": forms.TextInput(
-            attrs={"class": "block w-full rounded bg-slate-700 border border-slate-600 text-slate-100 px-3 py-2"}
-        ),
-        "note": forms.Textarea(
-            attrs={"class": "block w-full rounded bg-slate-700 border border-slate-600 text-slate-100 px-3 py-2", "rows": 2}
-        ),
-    },
-    can_delete=True,
-)
 
 
 class ExerciseImageForm(forms.ModelForm):

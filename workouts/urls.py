@@ -12,10 +12,4 @@ urlpatterns = [
     path("exercises/<int:pk>/delete/", views.ExerciseDeleteView.as_view(), name="exercise-delete"),
     path("exercises/<int:pk>/favorite/", views.toggle_favorite, name="exercise-favorite"),
 
-    # Training Plans
-    path("plans/", views.TrainingPlanListView.as_view(), name="trainingplan-list"),
-    path("plans/new/", views.TrainingPlanCreateView.as_view(), name="trainingplan-create"),
-    path("plans/<int:pk>/", views.TrainingPlanDetailView.as_view(), name="trainingplan-detail"),
-    path("plans/<int:pk>/edit/", views.TrainingPlanUpdateView.as_view(), name="trainingplan-edit"),
-    path("plans/<int:pk>/delete/", views.TrainingPlanDeleteView.as_view(), name="trainingplan-delete"),
 ]
