@@ -1,360 +1,144 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Тренування{% endblock %}
+
+{% block title %}Історія тренувань{% endblock %}
 
 {% block content %}
-<div class="pb-32 max-w-2xl mx-auto">
-  <div
-    class="bg-slate-800 p-6 rounded-2xl shadow-lg mb-6 border border-slate-700"
-  >
-    <div class="flex justify-between items-start">
-      <div>
-        <h1 class="text-2xl font-bold text-white mb-1">
-          {% if session.pk %}Тренування #{{ session.pk }}{% else %}Нове
-          тренування{% endif %}
-        </h1>
-        <p class="text-slate-400 text-sm">
-          {{ session.created_at|date:"d.m.Y H:i"|default:"Сьогодні" }}
-        </p>
-      </div>
-      <a
-        href="{% url 'training:start_session' %}"
-        class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-lg shadow-indigo-900/20 flex items-center gap-2"
-      >
-        <span>+ Почати тренування</span>
-      </a>
+<div class="pb-12 max-w-2xl mx-auto px-4 md:px-0">
+  
+  <div class="flex justify-between items-end mb-8">
+    <div>
+      <h1 class="text-5xl font-bold text-white mb-1">Історія</h1>
     </div>
+    <a
+      href="{% url 'training:start_session' %}"
+      class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-medium transition shadow-lg shadow-indigo-900/20 flex items-center gap-2 text-sm"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+      </svg>
+      <span>Нове тренування</span>
+    </a>
   </div>
 
-  <div class="space-y-6">
-    {% for ei in exercise_infos %}
-    <div
-      class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-md"
-    >
-      <div class="grid grid-cols-12 border-b border-slate-700 min-h-[72px]">
-        <div
-          class="col-span-6 p-4 flex flex-col justify-center border-r border-slate-700"
-        >
-          <div class="flex items-center gap-2">
-            <h3 class="font-bold text-white text-lg leading-tight">
-              {{ ei.entry.name }}
-            </h3>
-            <button
-              class="text-slate-500 hover:text-indigo-400 transition"
-              title="Info"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="w-5 h-5"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div
-          class="col-span-4 flex flex-col items-center justify-center bg-slate-800"
-        >
-          <div class="flex gap-4 text-center">
-            <div>
-              <div
-                class="text-[10px] uppercase text-slate-500 font-bold mb-0.5"
-              >
-                Вага
-              </div>
-              <div class="text-white font-mono font-semibold">
-                {{ ei.total_weight|floatformat:0 }}
-              </div>
+  <div class="space-y-4">
+    {% for session in sessions %}
+    <div class="group bg-slate-800 rounded-2xl border border-slate-700 hover:border-slate-600 transition shadow-lg overflow-hidden relative">
+      
+      <a href="{% url 'training:session_detail' session.pk %}" class="block p-5">
+        <div class="flex justify-between items-start mb-4">
+          <div class="flex gap-4 items-center">
+            <div class="bg-slate-700/50 rounded-lg p-2 text-center min-w-[3.5rem] border border-slate-600">
+              <span class="block text-xs text-slate-400 uppercase font-bold">{{ session.created_at|date:"M" }}</span>
+              <span class="block text-xl text-white font-bold leading-none">{{ session.created_at|date:"d" }}</span>
             </div>
-            <div class="w-px bg-slate-700 h-8 self-center"></div>
+            
             <div>
-              <div
-                class="text-[10px] uppercase text-slate-500 font-bold mb-0.5"
-              >
-                Рази
+              <div class="flex items-center gap-2">
+                <h3 class="text-lg font-bold text-white group-hover:text-indigo-400 transition">
+                  Тренування #{{ session.pk }}
+                </h3>
+                {% if session.ended_at %}
+                <span class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
+                  Завершено
+                </span>
+                {% else %}
+                <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded uppercase font-bold tracking-wide">
+                  Активне
+                </span>
+                {% endif %}
               </div>
-              <div class="text-white font-mono font-semibold">
-                {{ ei.total_reps }}
-              </div>
+              <p class="text-slate-400 text-xs mt-1">
+                {{ session.created_at|date:"H:i" }} • {{ session.created_at|date:"l" }}
+              </p>
             </div>
           </div>
-        </div>
 
-        <div class="col-span-2">
-          <form method="post" class="h-full w-full">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="add_set" />
-            <input type="hidden" name="entry_id" value="{{ ei.entry.pk }}" />
-            <button
-              type="submit"
-              class="w-full h-full bg-slate-800 hover:bg-emerald-900/30 text-emerald-500 hover:text-emerald-400 transition flex items-center justify-center"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="3"
-                stroke="currentColor"
-                class="w-8 h-8"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 4.5v15m7.5-7.5h-15"
-                />
-              </svg>
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <div class="bg-slate-900/30 p-2 space-y-2">
-        {% for s in ei.entry.sets.all %}
-        <div class="grid grid-cols-12 gap-3 items-center group relative">
-          <div class="col-span-2 flex justify-center">
-            <span class="text-xs font-mono text-slate-500"
-              >сет {{ s.order }}</span
-            >
-          </div>
-
-          <div class="col-span-4 relative">
-            <form method="post" class="update-set-form w-full">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="update_set" />
-              <input type="hidden" name="set_id" value="{{ s.pk }}" />
-              <input type="hidden" name="reps" value="{{ s.reps }}" />
-              <div class="relative">
-                <input
-                  type="number"
-                  step="0.5"
-                  name="weight"
-                  value="{{ s.weight }}"
-                  placeholder="0"
-                  class="w-full bg-slate-900 text-white text-center font-bold rounded-lg py-2 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition auto-save-field"
-                />
-                <span
-                  class="absolute right-2 top-2.5 text-[10px] text-slate-600 pointer-events-none"
-                  >кг</span
-                >
-              </div>
-            </form>
-          </div>
-
-          <div class="col-span-4 relative">
-            <form method="post" class="update-set-form w-full">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="update_set" />
-              <input type="hidden" name="set_id" value="{{ s.pk }}" />
-              <input type="hidden" name="weight" value="{{ s.weight }}" />
-              <input
-                type="number"
-                name="reps"
-                value="{{ s.reps }}"
-                placeholder="0"
-                class="w-full bg-slate-900 text-white text-center font-bold rounded-lg py-2 border border-slate-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition auto-save-field"
-              />
-            </form>
-          </div>
-
-          <div class="col-span-2 flex justify-center">
-            <form method="post">
-              {% csrf_token %}
-              <input type="hidden" name="action" value="delete_set" />
-              <input type="hidden" name="set_id" value="{{ s.pk }}" />
-              <button
-                type="submit"
-                class="text-slate-600 hover:text-red-500 transition p-2"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="2"
-                  stroke="currentColor"
-                  class="w-5 h-5"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
-                  />
-                </svg>
-              </button>
-            </form>
+          <div class="text-slate-600 group-hover:text-white transition">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
           </div>
         </div>
-        {% endfor %}
+
+        <div class="h-px bg-slate-700/50 w-full mb-4"></div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="col-span-2 sm:col-span-1">
+                <p class="text-[10px] uppercase text-slate-500 font-bold mb-2">Вправи</p>
+                <div class="flex flex-wrap gap-1.5">
+                    {% for entry in session.entries.all|slice:":3" %}
+                    <span class="text-xs text-slate-300 bg-slate-900 border border-slate-700 px-2 py-1 rounded-md">
+                        {{ entry.name }}
+                    </span>
+                    {% endfor %}
+                    {% if session.entries.count > 3 %}
+                    <span class="text-xs text-slate-500 px-1 py-1">+ ще {{ session.entries.count|add:"-3" }}</span>
+                    {% endif %}
+                    
+                    {% if session.entries.count == 0 %}
+                    <span class="text-xs text-slate-600 italic">Вправ немає</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-span-2 sm:col-span-1 flex items-end justify-between sm:justify-end gap-6">
+                <div class="text-right">
+                    <p class="text-[10px] uppercase text-slate-500 font-bold mb-0.5">Всього сетів</p>
+                    <p class="text-white font-mono font-semibold text-lg">{{ session.total_sets|default:"0" }}</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] uppercase text-slate-500 font-bold mb-0.5">Тоннаж</p>
+                    <p class="text-emerald-400 font-mono font-bold text-lg">
+                        {{ session.total_volume|default:"0" }} <span class="text-sm text-emerald-600">кг</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+      </a>
+
+      <div class="absolute top-5 right-5 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+         <form method="post" action="" onsubmit="return confirm('Видалити це тренування?');">
+    {% csrf_token %}
+    <input type="hidden" name="session_id" value="{{ session.pk }}">
+    
+    <button type="submit" class="p-2 text-slate-600 hover:text-red-500 bg-slate-800 hover:bg-slate-700 rounded-full border border-slate-700 transition" title="Видалити">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+        </svg>
+    </button>
+</form>
       </div>
 
-      <div
-        class="bg-slate-800 border-t border-slate-700 py-1 px-4 flex justify-end"
-      >
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="delete_entry" />
-          <input type="hidden" name="entry_id" value="{{ ei.entry.pk }}" />
-          <button
-            class="text-[10px] text-slate-500 hover:text-red-400 uppercase font-bold tracking-wider transition"
-            type="submit"
-          >
-            видалити вправу
-          </button>
-        </form>
-      </div>
     </div>
     {% empty %}
-    <div
-      class="bg-slate-800 rounded-xl p-8 text-center border border-dashed border-slate-600"
-    >
-      <p class="text-slate-400">Вправ ще немає. Натисніть кнопку зверху.</p>
+    <div class="bg-slate-800/50 rounded-2xl p-12 text-center border border-dashed border-slate-700">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-800 text-slate-600 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+        </div>
+        <h3 class="text-white font-bold text-lg mb-1">Тренувань ще немає</h3>
+        <p class="text-slate-500 text-sm mb-6">Почніть своє перше тренування.</p>
+        <a href="{% url 'training:start_session' %}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition">
+            Почати
+        </a>
     </div>
     {% endfor %}
   </div>
-</div>
 
-<div
-  class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-700 p-4 z-50"
->
-  <div class="max-w-2xl mx-auto flex justify-between items-center gap-4">
-    <a
-      href="/workouts/exercises/"
-      class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-medium transition text-center border border-slate-700"
-    >
-      Меню
-    </a>
-
-    <button
-      id="global-pause"
-      class="w-16 h-14 bg-amber-600 hover:bg-amber-500 text-white rounded-xl shadow-lg transition flex items-center justify-center"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="2.5"
-        stroke="currentColor"
-        class="w-8 h-8"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M15.75 5.25v13.5m-7.5-13.5v13.5"
-        />
-      </svg>
-    </button>
-
-    <button
-      id="finish-btn"
-      class="w-16 h-14 bg-slate-800 hover:bg-red-900/30 text-red-500 hover:text-red-400 border-2 border-red-500/50 hover:border-red-500 rounded-xl transition flex items-center justify-center"
-    >
-      <div class="w-5 h-5 bg-current rounded-sm"></div>
-    </button>
-  </div>
-</div>
-
-<div
-  id="finish-modal"
-  class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[100] backdrop-blur-sm"
->
-  <div
-    class="bg-slate-800 p-6 rounded-2xl border border-slate-600 w-80 shadow-2xl"
-  >
-    <h3 class="text-xl font-bold text-white mb-2">Завершити тренування?</h3>
-    <p class="text-slate-400 mb-6 text-sm">
-      Всі дані будуть збережені в історії.
-    </p>
-    <div class="flex gap-3">
-      <button
-        id="cancel-finish"
-        class="flex-1 py-3 rounded-xl bg-slate-700 text-white font-medium hover:bg-slate-600 transition"
-      >
-        Ні
-      </button>
-
-      {% if session.pk %}
-      <form
-        method="post"
-        action="{% url 'training:finish_session' session.pk %}"
-        class="flex-1"
-      >
-        {% csrf_token %}
-        <button
-          class="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-500 transition shadow-lg shadow-emerald-900/20"
-          type="submit"
-        >
-          Так
-        </button>
-      </form>
-      {% else %}
-      <button
-        disabled
-        class="flex-1 py-3 rounded-xl bg-gray-600 text-gray-400 font-bold cursor-not-allowed"
-      >
-        Помилка ID
-      </button>
+  {% if is_paginated %}
+  <div class="flex justify-center gap-2 mt-8">
+      {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition border border-slate-700">←</a>
       {% endif %}
-    </div>
+      
+      <span class="px-4 py-2 bg-slate-700 text-white rounded-lg font-mono border border-slate-600">{{ page_obj.number }}</span>
+      
+      {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 transition border border-slate-700">→</a>
+      {% endif %}
   </div>
+  {% endif %}
 </div>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const finishModal = document.getElementById("finish-modal");
-    const finishBtn = document.getElementById("finish-btn");
-    const cancelFinish = document.getElementById("cancel-finish");
-    const globalPause = document.getElementById("global-pause");
-
-    if (finishBtn && finishModal) {
-      finishBtn.addEventListener("click", () => {
-        finishModal.classList.remove("hidden");
-        finishModal.classList.add("flex");
-      });
-      cancelFinish.addEventListener("click", () => {
-        finishModal.classList.add("hidden");
-        finishModal.classList.remove("flex");
-      });
-    }
-
-    if (globalPause) {
-      globalPause.addEventListener("click", function () {
-        const isPaused = globalPause.dataset.paused === "1";
-        if (isPaused) {
-          globalPause.dataset.paused = "0";
-          globalPause.classList.remove("bg-emerald-600");
-          globalPause.classList.add("bg-amber-600");
-          globalPause.innerHTML =
-            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" /></svg>';
-        } else {
-          globalPause.dataset.paused = "1";
-          globalPause.classList.remove("bg-amber-600");
-          globalPause.classList.add("bg-emerald-600");
-          globalPause.innerHTML =
-            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg>';
-        }
-      });
-    }
-
-    document.querySelectorAll(".auto-save-field").forEach(function (input) {
-      input.addEventListener("blur", function () {
-        const form = input.closest(".update-set-form");
-        if (form) setTimeout(() => form.submit(), 200);
-      });
-      input.addEventListener("keypress", function (e) {
-        if (e.key === "Enter") {
-          input.blur();
-        }
-      });
-    });
-  });
-</script>
-
 {% endblock %}

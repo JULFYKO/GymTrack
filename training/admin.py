@@ -30,5 +30,5 @@ class AwardAdmin(admin.ModelAdmin):
 @admin.register(Set)
 class SetAdmin(admin.ModelAdmin):
     list_display = ('id', 'entry', 'order', 'weight', 'reps')
-from django.contrib import admin
+
 

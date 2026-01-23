@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.core.validators import FileExtensionValidator
@@ -7,11 +8,10 @@ import os
 class Exercise(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    # Це прев'ю (тільки картинка)
     main_image = models.ImageField(upload_to="exercises/thumbnails/", blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    # Users who favorited this exercise
     favorited_by = models.ManyToManyField(get_user_model(), related_name="favorite_exercises", blank=True)
+    calories_factor = models.DecimalField(max_digits=5, decimal_places=4, default=0.1000)
 
     class Meta:
         ordering = ["name"]
@@ -22,10 +22,8 @@ class Exercise(models.Model):
     def get_absolute_url(self):
         return reverse("workouts:exercise-detail", kwargs={"pk": self.pk})
 
-
 class ExerciseMedia(models.Model):
     exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE, related_name="media")
-    # FileField дозволяє і фото, і відео
     file = models.FileField(
         upload_to="exercises/gallery/",
         validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png', 'mp4', 'mov', 'avi'])]
@@ -33,7 +31,6 @@ class ExerciseMedia(models.Model):
     caption = models.CharField(max_length=255, blank=True)
     order = models.PositiveIntegerField(default=0)
     
-    # Тип файлу визначатимемо автоматично
     TYPE_CHOICES = (
         ('image', 'Image'),
         ('video', 'Video'),
@@ -44,7 +41,6 @@ class ExerciseMedia(models.Model):
         ordering = ["order"]
 
     def save(self, *args, **kwargs):
-        # Автоматичне визначення типу файлу перед збереженням
         ext = os.path.splitext(self.file.name)[1].lower()
         if ext in ['.mp4', '.mov', '.avi']:
             self.type = 'video'
@@ -54,4 +50,3 @@ class ExerciseMedia(models.Model):
 
     def __str__(self):
         return f"{self.exercise.name} - {self.caption or self.pk}"
-

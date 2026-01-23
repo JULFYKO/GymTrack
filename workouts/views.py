@@ -14,21 +14,27 @@ from .forms import ExerciseForm, ExerciseMediaFormSet
 
 
 class ExerciseListView(generic.ListView):
-	model = Exercise
-	template_name = "workouts/exercise_list.html"
-	context_object_name = "exercises"
+    model = Exercise
+    template_name = "workouts/exercise_list.html"
+    context_object_name = "exercises"
 
-	def get_context_data(self, **kwargs):
-		ctx = super().get_context_data(**kwargs)
-		user = self.request.user
-		if user.is_authenticated:
-			ctx["favorite_exercises"] = user.favorite_exercises.all()
-			ctx["favorites_count"] = ctx["favorite_exercises"].count()
-		else:
-			ctx["favorite_exercises"] = []
-			ctx["favorites_count"] = 0
-		return ctx
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        query = self.request.GET.get('q')
+        if query:
+            queryset = queryset.filter(name__icontains=query)
+        return queryset
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+        if user.is_authenticated:
+            ctx["favorite_exercises"] = user.favorite_exercises.all()
+            ctx["favorites_count"] = ctx["favorite_exercises"].count()
+        else:
+            ctx["favorite_exercises"] = []
+            ctx["favorites_count"] = 0
+        return ctx
 
 class ExerciseDetailView(generic.DetailView):
 	model = Exercise
@@ -60,10 +66,8 @@ class ExerciseCreateView(generic.CreateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         if self.request.POST:
-            # Якщо це POST запит, заповнюємо формсет даними
             ctx['media_formset'] = ExerciseMediaFormSet(self.request.POST, self.request.FILES)
         else:
-            # Якщо це GET запит, створюємо порожній формсет
             ctx['media_formset'] = ExerciseMediaFormSet()
         return ctx
 
@@ -72,12 +76,11 @@ class ExerciseCreateView(generic.CreateView):
         media_formset = context['media_formset']
         
         if media_formset.is_valid():
-            self.object = form.save() # Спочатку зберігаємо саму вправу
-            media_formset.instance = self.object # Прив'язуємо галерею до цієї вправи
-            media_formset.save() # Зберігаємо галерею
+            self.object = form.save()
+            media_formset.instance = self.object
+            media_formset.save()
             return super().form_valid(form)
         else:
-            # Якщо помилка у формсеті, повертаємо сторінку з помилками
             return self.render_to_response(self.get_context_data(form=form))
 
 
@@ -110,7 +113,6 @@ class ExerciseUpdateView(generic.UpdateView):
 
 
 def home(request):
-	# show last 3 completed trainings and popular plans
 	from training.models import TrainingSession
 	last_trainings = TrainingSession.objects.filter(ended_at__isnull=False).order_by('-ended_at')[:3]
 	

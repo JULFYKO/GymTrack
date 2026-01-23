@@ -1,29 +1,83 @@
-{% extends 'base.html' %} {% block title %}Workout Summary — GymTrack{% endblock
-%} {% block content %}
-<h1 class="text-2xl font-semibold text-slate-100">
-  Підсумок тренування — {{ session.started_at|date:'Y-m-d' }}
-</h1>
-<p class="text-slate-300">Тривалість: {{ duration }}</p>
-<p class="text-slate-300">Загальна сума ваги: {{ total }}</p>
+{% extends 'base.html' %}
+{% load static %}
 
-<div class="mt-4 space-y-4">
-  {% for e in exercises %}
-  <div class="bg-slate-800 p-3 rounded">
-    <div class="flex items-center justify-between border-b pb-3">
-      <div class="text-slate-100 font-medium">{{ e.name }}</div>
-      <div class="text-slate-400">Total: {{ e.total_weight }}</div>
+{% block title %}Підсумок тренування{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-8">
+    <div class="bg-slate-800 rounded-2xl p-8 border border-slate-700 shadow-2xl text-center mb-8">
+        <div class="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-10 h-10 text-emerald-500">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        
+        <h1 class="text-3xl font-bold text-white mb-2">Тренування завершено!</h1>
+        <p class="text-slate-400 mb-8">{{ session.started_at|date:"d E Y, H:i" }}</p>
+
+        <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto">
+            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
+                <p class="text-xs text-slate-500 uppercase font-bold mb-1">Тривалість</p>
+                <p class="text-xl text-white font-mono font-semibold">
+                    {% if duration %}
+                        {{ duration|stringformat:"s"|slice:":7" }}
+                    {% else %}
+                        --:--
+                    {% endif %}
+                </p>
+            </div>
+            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
+                <p class="text-xs text-slate-500 uppercase font-bold mb-1">Тоннаж</p>
+                <p class="text-xl text-emerald-400 font-mono font-bold">{{ total|floatformat:0 }} кг</p>
+            </div>
+            <div class="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 col-span-2">
+                <p class="text-xs text-slate-500 uppercase font-bold mb-1">Спалено</p>
+                <p class="text-xl text-orange-400 font-mono font-bold">{{ total_burned|floatformat:0 }} ккал</p>
+            </div>
+        </div>
+
+        <div class="mt-6 p-4 rounded-xl border {% if goal_reached %}bg-emerald-500/10 border-emerald-500/30{% else %}bg-amber-500/10 border-amber-500/30{% endif %}">
+            {% if goal_reached %}
+                <h3 class="text-lg font-bold text-emerald-400 flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Ціль досягнуто!
+                </h3>
+                <p class="text-slate-300 text-sm mt-1">Ви успішно спалили заплановані {{ target }} ккал.</p>
+            {% else %}
+                <h3 class="text-lg font-bold text-amber-400 flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Ціль не закрито
+                </h3>
+                <p class="text-slate-300 text-sm mt-1">Спалено {{ total_burned|floatformat:0 }} з {{ target }} ккал. Не здавайся!</p>
+            {% endif %}
+        </div>
     </div>
-    <div class="mt-3 space-y-2">
-      {% for s in e.sets.all %}
-      <div class="grid grid-cols-3 gap-4 items-center bg-slate-900 p-2 rounded">
-        <div class="text-slate-100">Підхід {{ s.order }}</div>
-        <div class="text-slate-300">{{ s.reps }} повторень</div>
-        <div class="text-slate-300 text-right">{{ s.weight }} кг</div>
-      </div>
-      {% endfor %}
+
+    <div class="space-y-4 mb-8">
+        <h2 class="text-xl font-bold text-white px-2">Виконані вправи</h2>
+        {% for e in exercises %}
+        <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 flex justify-between items-center">
+            <div>
+                <h3 class="font-bold text-slate-200">{{ e.name }}</h3>
+                <p class="text-sm text-slate-500">{{ e.sets.count }} підходи(ів)</p>
+            </div>
+            <div class="text-right">
+                <p class="font-mono text-emerald-400 font-bold">{{ e.total_weight|floatformat:0 }} кг</p>
+                <p class="text-xs text-orange-400 font-mono">{{ e.calories_burned|floatformat:0 }} ккал</p>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-slate-500 text-center italic">Вправ не знайдено.</p>
+        {% endfor %}
     </div>
-  </div>
-  {% endfor %}
+
+    <div class="flex gap-4">
+        <a href="{% url 'training:session_list' %}" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-center py-3 rounded-xl font-semibold transition">
+            Історія
+        </a>
+        <a href="{% url 'training:start_session' %}" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-center py-3 rounded-xl font-bold transition shadow-lg shadow-indigo-500/20">
+            Нове тренування
+        </a>
+    </div>
 </div>
-
 {% endblock %}

@@ -21,8 +21,6 @@
               Exercises
             </a>
             
-            
-
             <a
               class="hover:bg-slate-800 px-3 py-2 rounded transition"
               href="/training/"
@@ -39,10 +37,17 @@
           </div>
 
           <div class="flex items-center space-x-2">
-            {% if request.user.is_authenticated %}
-            <a class="px-3 py-2 rounded hover:bg-slate-800 transition" href="#">
-              {{ request.user.username }}
+            {% if user.is_authenticated %} 
+            
+            <a class="px-3 py-2 rounded hover:bg-slate-800 transition text-slate-300 hover:text-white" href="{% url 'training:profile' %}">
+              Profile
             </a>
+          
+            <span class="text-slate-500">|</span> 
+            <a class="px-3 py-2 rounded hover:bg-slate-800 transition font-bold" href="#">
+              {{ user.username }} 
+            </a>
+            
             <form method="post" action="{% url 'logout' %}">
               {% csrf_token %}
               <button
@@ -68,5 +73,7 @@
     <div class="max-w-4xl mx-auto px-4 py-6 pb-24">
       {% block content %}{% endblock %}
     </div>
+    
+    {% block extra_js %}{% endblock %}
   </body>
 </html>

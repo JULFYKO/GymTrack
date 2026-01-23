@@ -1,49 +1,60 @@
-{% extends 'base.html' %} {% block title %}Login — GymTrack{% endblock %} {%
-block content %}
-<div class="max-w-md mx-auto mt-20">
-  <div class="bg-slate-800 rounded-lg p-6 shadow-lg border border-slate-700">
-    <h1 class="text-2xl font-bold text-slate-100 mb-4">Sign in</h1>
-    <form method="post" action="">
-      {% csrf_token %} {% if form.non_field_errors %}
-      <div class="text-red-400 mb-3">{{ form.non_field_errors }}</div>
+{% extends 'base.html' %}
+
+{% block title %}Вхід — GymTrack{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-10rem)] flex items-center justify-center px-4">
+  <div class="max-w-md w-full bg-slate-800 rounded-2xl shadow-2xl p-8 border border-slate-700">
+    
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-500/10 text-indigo-400 mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-white mb-2">З поверненням!</h1>
+      <p class="text-slate-400 text-sm">Увійдіть, щоб продовжити тренування</p>
+    </div>
+
+    <form method="post" class="space-y-6">
+      {% csrf_token %}
+      
+      {% if form.errors %}
+      <div class="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm text-center animate-pulse">
+        <p class="font-bold">Помилка входу</p>
+        <p>Перевірте логін та пароль.</p>
+      </div>
       {% endif %}
 
-      <label class="block text-sm text-slate-300 mb-1">Username</label>
-      <input
-        type="text"
-        name="username"
-        value="{{ form.username.value|default_if_none:'' }}"
-        class="w-full mb-3 px-3 py-2 rounded bg-slate-700 text-slate-200 border border-slate-600 focus:outline-none"
-        autofocus
-      />
+      <div>
+        <label for="id_username" class="block text-sm font-medium text-slate-300 mb-1.5 ml-1">Логін</label>
+        <input type="text" name="username" autofocus required id="id_username" 
+               class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition placeholder-slate-600"
+               placeholder="Ваше ім'я користувача">
+      </div>
 
-      <label class="block text-sm text-slate-300 mb-1">Password</label>
-      <input
-        type="password"
-        name="password"
-        class="w-full mb-4 px-3 py-2 rounded bg-slate-700 text-slate-200 border border-slate-600 focus:outline-none"
-      />
+      <div>
+        <label for="id_password" class="block text-sm font-medium text-slate-300 mb-1.5 ml-1">Пароль</label>
+        <input type="password" name="password" required id="id_password" 
+               class="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition placeholder-slate-600"
+               placeholder="••••••••">
+      </div>
 
-      {% if next %}
-      <input type="hidden" name="next" value="{{ next }}" />
-      {% elif request.GET.next %}
-      <input type="hidden" name="next" value="{{ request.GET.next }}" />
-      {% endif %}
-
-      <button
-        type="submit"
-        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded"
-      >
-        Sign in
+      <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-indigo-500/20 active:scale-[0.98]">
+        Увійти
       </button>
+      
+      <input type="hidden" name="next" value="{{ next }}">
     </form>
 
-    <div class="mt-4 text-sm text-slate-400">
-      <a href="{% url 'workouts:exercise-list' %}" class="hover:underline"
-        >Back to exercises</a
-      >
-      <span class="mx-2">·</span>
-      <a href="{% url 'register' %}" class="hover:underline">Create account</a>
+    <div class="mt-8 text-center text-sm text-slate-400 flex items-center justify-center gap-4">
+      <a href="{% url 'workouts:exercise-list' %}" class="hover:text-white transition hover:underline">
+        Вправи
+      </a>
+      <span class="text-slate-700">|</span>
+      <a href="{% url 'register' %}" class="text-indigo-400 hover:text-indigo-300 font-medium hover:underline transition">
+        Створити акаунт
+      </a>
     </div>
   </div>
 </div>

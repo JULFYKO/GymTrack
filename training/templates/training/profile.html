@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile — GymTrack{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    
+    <div class="bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-700">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <h1 class="text-3xl font-bold text-white">{{ request.user.username }}</h1>
+                <p class="text-slate-400 text-sm">Ваші показники</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 w-full md:w-auto">
+                <div class="bg-slate-700 p-3 rounded text-center">
+                    <span class="text-xs text-slate-400 uppercase">BMI</span>
+                    <div class="text-xl font-bold text-white">{{ profile.bmi }}</div>
+                </div>
+                
+                <div class="bg-slate-700 p-3 rounded text-center">
+                    <span class="text-xs text-slate-400 uppercase">BMR</span>
+                    <div class="text-xl font-bold text-blue-400">
+                        {{ profile.bmr }}
+                    </div>
+                </div>
+
+                <div class="bg-slate-700 p-3 rounded text-center border border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                    <span class="text-xs text-emerald-400 uppercase">Ціль (ккал)</span>
+                    <div class="text-2xl font-bold text-emerald-400">
+                        {{ profile.target_calories }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-slate-800 p-6 rounded-lg shadow-lg border border-slate-700">
+        <h2 class="text-xl font-semibold text-white mb-6 border-b border-slate-700 pb-2">
+            Редагування параметрів
+        </h2>
+        
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {% for field in form %}
+                <div class="flex flex-col {% if field.name == 'activity_level' or field.name == 'goal' %}md:col-span-2{% endif %}">
+                    <label class="text-sm font-medium text-slate-300 mb-2" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+                    
+                    <div class="text-slate-100">
+                        {{ field }} 
+                    </div>
+                    
+                    {% if field.errors %}
+                    <div class="text-red-400 text-xs mt-1">
+                        {{ field.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="pt-6 border-t border-slate-700 mt-4">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition shadow-lg shadow-indigo-500/20">
+                    Розрахувати норму калорій
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

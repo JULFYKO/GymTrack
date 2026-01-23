@@ -3,38 +3,54 @@ from django.urls import reverse
 from urllib.parse import quote
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.db.models import Sum, F, Max
-
-from .models import TrainingSession, ExerciseEntry, Medal, Award, Set
+from django.db.models import Sum, F, Count, DecimalField, ExpressionWrapper, Value, Max
+from django.db.models.functions import Coalesce
+from .models import TrainingSession, ExerciseEntry, Medal, Award, Set, UserProfile
 from workouts.models import Exercise as WorkoutExercise
-from .forms import ExerciseEntryForm
-
+from .forms import ExerciseEntryForm, UserProfileForm
 
 def session_list(request):
-    sessions = TrainingSession.objects.order_by('-started_at')[:50]
+    if request.method == 'POST':
+        session_id = request.POST.get('session_id')
+        if session_id:
+            session_to_delete = get_object_or_404(TrainingSession, pk=session_id)
+            session_to_delete.delete()
+            return redirect('training:session_list')
+
+    sessions = TrainingSession.objects.annotate(
+        total_volume=Coalesce(
+            Sum(
+                ExpressionWrapper(
+                    F('exercises__sets__weight') * F('exercises__sets__reps'),
+                    output_field=DecimalField()
+                )
+            ),
+            Value(0, output_field=DecimalField()),
+            output_field=DecimalField()
+        ),
+        total_sets=Count('exercises__sets', distinct=True)
+    ).prefetch_related('exercises').order_by('-started_at')[:50]
+
     return render(request, 'training/session_list.html', {'sessions': sessions})
 
-
 def start_session(request):
-    session = TrainingSession.objects.create(user=request.user if request.user.is_authenticated else None,
-                                             started_at=timezone.now())
+    session = TrainingSession.objects.create(user=request.user if request.user.is_authenticated else None, started_at=timezone.now())
     return redirect('training:session_detail', pk=session.pk)
 
-
+@login_required
 def session_detail(request, pk):
     session = get_object_or_404(TrainingSession, pk=pk)
     if request.method == 'POST':
         if 'action' in request.POST:
             action = request.POST.get('action')
             if action == 'add_exercise':
-                # enforce selection flow: redirect user to exercises list to pick an exercise
                 next_url = request.path
                 return redirect(f"/workouts/exercises/?session={session.pk}&next={quote(next_url)}")
             elif action == 'add_exercise_from_library':
                 exercise_id = request.POST.get('exercise_id')
                 try:
                     ex = WorkoutExercise.objects.get(pk=exercise_id)
-                    entry = ExerciseEntry.objects.create(training=session, name=ex.name)
+                    entry = ExerciseEntry.objects.create(training=session, name=ex.name, calories_factor=ex.calories_factor)
                     Set.objects.create(entry=entry, order=1, weight=0, reps=0)
                 except WorkoutExercise.DoesNotExist:
                     pass
@@ -50,7 +66,6 @@ def session_detail(request, pk):
                 s = get_object_or_404(Set, pk=set_id, entry__training=session)
                 entry = s.entry
                 s.delete()
-                # re-order remaining sets
                 for i, s2 in enumerate(entry.sets.order_by('order'), start=1):
                     if s2.order != i:
                         s2.order = i
@@ -63,11 +78,17 @@ def session_detail(request, pk):
                 return redirect('training:session_detail', pk=pk)
             elif action == 'update_set':
                 set_id = request.POST.get('set_id')
-                weight = request.POST.get('weight') or 0
-                reps = request.POST.get('reps') or 0
+                weight_raw = request.POST.get('weight', '').replace(',', '.')
+                reps_raw = request.POST.get('reps', '')
                 s = get_object_or_404(Set, pk=set_id, entry__training=session)
-                s.weight = weight
-                s.reps = reps
+                try:
+                    s.weight = float(weight_raw) if weight_raw.strip() else 0.0
+                except ValueError:
+                    pass
+                try:
+                    s.reps = int(reps_raw) if reps_raw.strip() else 0
+                except ValueError:
+                    pass
                 s.save()
                 return redirect('training:session_detail', pk=pk)
             elif action in ('inc', 'dec'):
@@ -86,17 +107,25 @@ def session_detail(request, pk):
     exercises = session.exercises.order_by('added_at').prefetch_related('sets')
     total = session.total_weight
 
-    # prepare per-entry aggregates for template (total reps, total weight)
+    burned_now = session.total_calories_burned
+    target = 0
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        target = request.user.profile.target_calories
+    
+    progress_percent = 0
+    if target > 0:
+        progress_percent = min(int((burned_now / target) * 100), 100)
+
     exercise_infos = []
     for e in exercises:
         total_reps = sum([s.reps for s in e.sets.all()])
         exercise_infos.append({'entry': e, 'total_reps': total_reps, 'total_weight': e.total_weight})
 
-    # available exercises (library)
     try:
         available_exercises = WorkoutExercise.objects.all()
     except Exception:
         available_exercises = []
+    
     return render(request, 'training/session_detail.html', {
         'session': session,
         'form': form,
@@ -104,17 +133,30 @@ def session_detail(request, pk):
         'exercise_infos': exercise_infos,
         'total': total,
         'available_exercises': available_exercises,
+        'burned_now': burned_now,
+        'target_calories': target,
+        'progress_percent': progress_percent,
     })
-
 
 def finish_session(request, pk):
     session = get_object_or_404(TrainingSession, pk=pk)
     session.ended_at = timezone.now()
     session.save()
 
-    # Award medals if thresholds met
     if session.user and session.user.is_authenticated:
-        total_all = TrainingSession.objects.filter(user=session.user).aggregate(total=Sum(F('exercises__weight') * F('exercises__reps')))['total'] or 0
+        total_all = TrainingSession.objects.filter(user=session.user).aggregate(
+            total=Coalesce(
+                Sum(
+                    ExpressionWrapper(
+                        F('exercises__sets__weight') * F('exercises__sets__reps'),
+                        output_field=DecimalField()
+                    )
+                ), 
+                0, 
+                output_field=DecimalField()
+            )
+        )['total']
+
         medals = Medal.objects.all()
         for m in medals:
             try:
@@ -123,12 +165,10 @@ def finish_session(request, pk):
                 if total_all >= m.threshold_total_weight:
                     Award.objects.create(user=session.user, medal=m, training=session)
 
-    return redirect('training:session_detail', pk=pk)
-
+    return redirect('training:workout_summary', pk=pk)
 
 def workout_summary(request, pk):
     session = get_object_or_404(TrainingSession, pk=pk)
-    # only show summary for finished sessions
     if not session.ended_at:
         return redirect('training:session_detail', pk=pk)
     exercises = session.exercises.prefetch_related('sets')
@@ -136,16 +176,25 @@ def workout_summary(request, pk):
     duration = None
     if session.ended_at and session.started_at:
         duration = session.ended_at - session.started_at
+    
+    total_burned = session.total_calories_burned
+    target = 0
+    if session.user and hasattr(session.user, 'profile'):
+        target = session.user.profile.target_calories
+    
+    goal_reached = total_burned >= target if target > 0 else False
+
     return render(request, 'training/workout_summary.html', {
         'session': session,
         'exercises': exercises,
         'total': total,
         'duration': duration,
+        'total_burned': total_burned,
+        'target': target,
+        'goal_reached': goal_reached,
     })
 
-
 def analytics(request):
-    # Simple analytics: total weight all time, by day, per session history
     qs = TrainingSession.objects.all()
     total_all = 0
     sessions = []
@@ -153,7 +202,6 @@ def analytics(request):
         sessions.append({'session': s, 'total': s.total_weight})
         total_all += s.total_weight
 
-    # by day
     by_day = {}
     for s in qs:
         day = s.started_at.date()
@@ -171,12 +219,8 @@ def analytics(request):
         'medals': medals,
     })
 
-
 def exercise_analytics(request, exercise_id):
-    """Per-exercise analytics: per-session reps and total weight, personal totals and medal tiers."""
     ex = get_object_or_404(WorkoutExercise, pk=exercise_id)
-
-    # Aggregate ExerciseEntry by training session for this exercise name
     entries = ExerciseEntry.objects.filter(name=ex.name).select_related('training').prefetch_related('sets')
     per_session = {}
     for e in entries:
@@ -188,14 +232,11 @@ def exercise_analytics(request, exercise_id):
         per_session[tid]['reps'] += reps
         per_session[tid]['weight'] += weight
 
-    # Order by session date
     sessions = sorted(per_session.values(), key=lambda x: x['session'].started_at)
-
     labels = [s['session'].started_at.strftime('%Y-%m-%d') for s in sessions]
     weights = [s['weight'] for s in sessions]
     reps = [s['reps'] for s in sessions]
 
-    # User-specific totals
     user_total_weight = 0.0
     user_total_reps = 0
     if request.user.is_authenticated:
@@ -204,20 +245,15 @@ def exercise_analytics(request, exercise_id):
                 user_total_weight += s['weight']
                 user_total_reps += s['reps']
 
-    # Determine global maxima to compute relative medal tiers
     global_max_weight = max(weights) if weights else 0.0
     global_max_reps = max(reps) if reps else 0
 
     def tier(value, maximum):
-        if maximum <= 0:
-            return None
+        if maximum <= 0: return None
         p = value / maximum
-        if p >= 0.9:
-            return 'gold'
-        if p >= 0.6:
-            return 'silver'
-        if p >= 0.3:
-            return 'bronze'
+        if p >= 0.9: return 'gold'
+        if p >= 0.6: return 'silver'
+        if p >= 0.3: return 'bronze'
         return None
 
     weight_tier = tier(user_total_weight, global_max_weight)
@@ -234,3 +270,37 @@ def exercise_analytics(request, exercise_id):
         'reps_tier': reps_tier,
     })
 
+@login_required
+def profile_view(request):
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('training:profile')
+    else:
+        form = UserProfileForm(instance=profile)
+    
+    bmi = profile.bmi
+    bmi_status = ""
+    bmi_color = ""
+    if bmi < 18.5:
+        bmi_status = "Недостатня вага"
+        bmi_color = "text-blue-400"
+    elif 18.5 <= bmi < 25:
+        bmi_status = "Норма"
+        bmi_color = "text-emerald-400"
+    elif 25 <= bmi < 30:
+        bmi_status = "Надлишкова вага"
+        bmi_color = "text-yellow-400"
+    else:
+        bmi_status = "Ожиріння"
+        bmi_color = "text-red-400"
+
+    return render(request, 'training/profile.html', {
+        'form': form,
+        'profile': profile,
+        'bmi_status': bmi_status,
+        'bmi_color': bmi_color
+    })

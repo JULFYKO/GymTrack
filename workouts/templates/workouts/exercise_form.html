@@ -151,7 +151,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     
-    // --- 1. Thumbnail Preview Logic ---
     const thumbnailInput = document.querySelector('input[name="main_image"]');
     const previewContainer = document.getElementById('thumbnail-preview-container');
     const previewImage = document.getElementById('thumbnail-preview');
@@ -172,7 +171,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- 2. Auto-Resize Description ---
     const descriptionField = document.querySelector('textarea[name="description"]');
     if (descriptionField) {
         const autoResize = () => {
@@ -181,44 +179,25 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         descriptionField.style.overflowY = 'hidden';
         descriptionField.addEventListener('input', autoResize);
-        // Викликаємо один раз при завантаженні, щоб розтягнути, якщо текст вже є
         autoResize(); 
     }
 
-    // --- 3. Dynamic Formset Logic (ВИПРАВЛЕНО) ---
     const addBtn = document.getElementById('add-media-btn');
     const list = document.getElementById('media-list');
     const emptyFormTemplate = document.getElementById('empty-form-template');
     
-    // ВИПРАВЛЕННЯ: Шукаємо input, ім'я якого закінчується на TOTAL_FORMS
-    // Це працює для будь-якого префікса (media, form, gallery тощо)
     const totalFormsInput = document.querySelector('input[type="hidden"][name$="-TOTAL_FORMS"]');
 
     if (addBtn && list && emptyFormTemplate && totalFormsInput) {
         addBtn.addEventListener('click', function(e) {
-            e.preventDefault(); // Запобігаємо будь-яким дефолтним діям
-            
+            e.preventDefault();
             let count = parseInt(totalFormsInput.value);
-            
-            // Отримуємо HTML шаблону
             let newRowHTML = emptyFormTemplate.innerHTML;
-            
-            // Знаходимо реальний префікс (наприклад, 'media' або 'form')
-            // name="media-TOTAL_FORMS" -> prefix="media"
             const prefix = totalFormsInput.name.split('-')[0];
-            
-            // Замінюємо __prefix__ на поточний номер (count)
-            // Також замінюємо можливий старий префікс, якщо Django використав інший у empty_form
             const regex = new RegExp(`(${prefix}|form)-__prefix__`, 'g');
             newRowHTML = newRowHTML.replace(regex, `${prefix}-${count}`);
-            
-            // Про всяк випадок проста заміна __prefix__, якщо regex не спрацював
             newRowHTML = newRowHTML.replace(/__prefix__/g, count);
-
-            // Додаємо в DOM
             list.insertAdjacentHTML('beforeend', newRowHTML);
-            
-            // Оновлюємо лічильник
             totalFormsInput.value = count + 1;
         });
     } else {
@@ -227,26 +206,19 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Total Input:", totalFormsInput);
     }
 
-    // --- 4. Remove Logic ---
     if (list) {
         list.addEventListener('click', function(e) {
-            // Кнопка Remove (для нових рядків)
             const removeBtn = e.target.closest('.remove-row-btn');
             if (removeBtn) {
                 removeBtn.closest('.media-row').remove();
-                // Тут ми НЕ зменшуємо TOTAL_FORMS, Django це обробляє нормально
             }
             
-            // Кнопка Delete (для існуючих рядків)
             const delLabel = e.target.closest('.delete-trigger');
             if (delLabel) {
                 const row = delLabel.closest('.media-row');
-                const checkbox = row.querySelector('input[type="checkbox"]'); // Стандартний Django checkbox
+                const checkbox = row.querySelector('input[type="checkbox"]');
                 
-                // Якщо ми приховали стандартний чекбокс через CSS (hidden), треба його перемикати вручну:
                 if (checkbox) {
-                    // Якщо чекбокс був прихований display:none, клік по label може не спрацювати на ньому автоматично
-                    // тому робимо невелику затримку для перевірки стану
                     setTimeout(() => {
                          const labelText = delLabel.querySelector('.delete-label');
                          if (checkbox.checked) {
@@ -265,7 +237,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-    /* Анімація для нових рядків */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(-10px); }
         to { opacity: 1; transform: translateY(0); }

@@ -22,12 +22,11 @@ class ExerciseMediaForm(forms.ModelForm):
             "order": forms.NumberInput(attrs={"class": "block rounded bg-slate-700 border border-slate-600 text-slate-100 px-2 py-1 text-sm", "style": "width: 60px"}),
         }
 
-# FormSet пов'язує Exercise з ExerciseMedia
 ExerciseMediaFormSet = inlineformset_factory(
     Exercise,
     ExerciseMedia,
     form=ExerciseMediaForm,
-    extra=0, # Не створювати пусті поля автоматично (робимо це через JS)
+    extra=0,
     can_delete=True
 )
 
